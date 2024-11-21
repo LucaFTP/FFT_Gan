@@ -5,17 +5,13 @@ from matplotlib import pyplot as plt
 from skimage.transform import resize, rotate
 import tensorflow as tf
 
-def apply_floor_log(array):
-    array[array <= 0] = np.min(array[array > 0])
-    return np.log(array)
-
-def create_folders():
+def create_folders(redshift):
     
-    version='_z_0.03'
-    CKPT_OUTPUT_PATH = 'VAC-PGGAN_ckpts'+version
-    IMG_OUTPUT_PATH = 'VAC-PGGAN_Images'+version
-    ARCH_OUTPUT_PATH = 'VAC-PGGAN_Arch'+version
-    LOSS_OUTPUT_PATH = 'VAC-PGGAN_Loss'+version
+    version='_z_'+str(redshift)
+    CKPT_OUTPUT_PATH = 'FFT_GAN_ckpts'+version
+    IMG_OUTPUT_PATH = 'FFT_GAN_Images'+version
+    ARCH_OUTPUT_PATH = 'FFT_GAN_Arch'+version
+    LOSS_OUTPUT_PATH = 'FFT_GAN_Loss'+version
     DATASET_OUTPUT_PATH = 'synthetic_data'+version
 
     try:
@@ -91,9 +87,8 @@ class CustomDataGen(tf.keras.utils.Sequence):
             if self.rot_col:
                 imgs[freq] = rotate(imgs[freq], rotation_angle)
 
-            imgs[freq] = (imgs[freq] - np.mean(imgs[freq]))/(imgs[freq] + np.mean(imgs[freq]))
+            # imgs[freq] = (imgs[freq] - np.mean(imgs[freq]))/(imgs[freq] + np.mean(imgs[freq]))
             # imgs[freq] = (imgs[freq] - np.min(imgs[freq]))/(np.max(imgs[freq]) + np.min(imgs[freq]))
-            # imgs[freq] = apply_floor_log(imgs[freq])
             
         stacked_img = np.stack(list(imgs.values()), axis=2)
         image_arr = tf.image.resize(stacked_img,(target_size[0], target_size[1])).numpy()       
@@ -132,19 +127,15 @@ class CustomDataGen(tf.keras.utils.Sequence):
     def __len__(self):
         return self.n // self.batch_size
 
-def load_meta_data(redshift, print_opt=False):
+def load_meta_data(redshift, show=False):
     meta_data = pd.read_csv("mainframe.csv")
     meta_data=meta_data[meta_data['redshift']==redshift]
 
     meta_data = meta_data[['id','redshift', 'mass', 'simulation', 'snap', 
                            'ax', 'rot']].drop_duplicates()#.sort_values(by=['mass', 'rot']).reset_index(drop=True)
-    if (print_opt==True):
-        print(f"Data Shape: {meta_data.shape}")
-    '''
-    aug_meta_data = augment_by_rotation(meta_data)
-    print(f"Data Shape of augmented dataset: {aug_meta_data.shape}")
-    '''
+    
     # Showing what all is in my data
-    get_unique(meta_data)
+    if show:
+        get_unique(meta_data)
     
     return meta_data

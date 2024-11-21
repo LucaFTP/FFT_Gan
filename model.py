@@ -345,7 +345,7 @@ def compute_tstr(meta_data, model, d_steps, NOISE_DIM):
     
     xgan = PGAN(latent_dim = NOISE_DIM, d_steps =  d_steps)
 
-    for n_depth in range(1,7):
+    for n_depth in range(1,5):
         xgan.n_depth = n_depth
         xgan.fade_in_generator()
         xgan.fade_in_discriminator()
@@ -358,10 +358,10 @@ def compute_tstr(meta_data, model, d_steps, NOISE_DIM):
     tstr_regressor = xgan.regressor 
 
     noise_dim = NOISE_DIM
-    num_imgs = 140
+    num_imgs = 50
 
     random_latent_vectors = tf.random.normal(shape=[num_imgs, noise_dim])
-    random_mass = np.round(tf.random.uniform([num_imgs, 1], minval=13, maxval=15),2)
+    random_mass = np.round(tf.random.uniform([num_imgs, 1], minval=13.8, maxval=14.8),2)
     # random_mass += 0.
 
     generated_imgs = model.generator.predict([random_latent_vectors, random_mass])  # num_images x 128 x 128 x 1

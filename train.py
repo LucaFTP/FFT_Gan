@@ -10,7 +10,7 @@ sys.path.append('../')
 import math
 
 
-def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, START_SIZE, END_SIZE,  cbk, pgan, meta_data):
+def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, START_SIZE, END_SIZE,  cbk, pgan, meta_data, loss_out_path):
 
     generator_optimizer     = tf.keras.optimizers.Adam(learning_rate=G_LR, beta_1=0.0, beta_2=0.999, epsilon=1e-8)
     discriminator_optimizer = tf.keras.optimizers.Adam(learning_rate=D_LR, beta_1=0.0, beta_2=0.999, epsilon=1e-8)
@@ -26,7 +26,7 @@ def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, START_SIZE, END
     # 4 x 4
     print('SIZE: ', START_SIZE)
     history_init  = pgan.fit(train_dataset, steps_per_epoch = STEPS_PER_EPOCH, epochs = EPOCHS, callbacks=[cbk], verbose=1)
-    np.save(f'{LOSS_OUTPUT_PATH}/history_init.npy',history_init.history)
+    np.save(f'{loss_out_path}/history_init.npy', history_init.history)
 
     n_depth_init = 1
 
@@ -69,7 +69,7 @@ def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, START_SIZE, END
                      r_optimizer=tf.keras.optimizers.Adam(learning_rate=R_LR, beta_1=0.0, beta_2=0.999, epsilon=1e-8))
         # Train fade in generator and discriminator
         history_fade_in = pgan.fit(train_dataset, steps_per_epoch = steps_per_epoch, epochs = EPOCHS, callbacks=[cbk], verbose=1) 
-        np.save(f'{LOSS_OUTPUT_PATH}/history_fade_in_{n_depth}.npy',history_fade_in.history)
+        np.save(f'{loss_out_path}/history_fade_in_{n_depth}.npy',history_fade_in.history)
 
         # Change to stabilized generator and discriminator
         cbk.set_prefix(prefix=f'{n_depth}_stabilize')
@@ -85,7 +85,7 @@ def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, START_SIZE, END
                      r_optimizer=tf.keras.optimizers.Adam(learning_rate=R_LR, beta_1=0.0, beta_2=0.999, epsilon=1e-8))
 
         # Train stabilized generator and discriminator
-        history_stabilize = pgan.fit(train_dataset, steps_per_epoch = steps_per_epoch, epochs = EPOCHS, callbacks=[cbk], verbose=1) #train alpha = 1 
-        np.save(f'{LOSS_OUTPUT_PATH}/history_stabilize_{n_depth}.npy',history_stabilize.history)
+        history_stabilize = pgan.fit(train_dataset, steps_per_epoch = steps_per_epoch, epochs = epochs, callbacks=[cbk], verbose=1) #train alpha = 1 
+        np.save(f'{loss_out_path}/history_stabilize_{n_depth}.npy',history_stabilize.history)
         
     return pgan

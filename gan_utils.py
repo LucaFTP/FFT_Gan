@@ -25,14 +25,11 @@ def plot_models(pgan, ARCH_OUTPUT_PATH, typeof='init'):
         tf.keras.utils.plot_model(pgan.generator, to_file=f'{ARCH_OUTPUT_PATH}/generator_{pgan.n_depth}.png', show_shapes=True)
         tf.keras.utils.plot_model(pgan.discriminator, to_file=f'{ARCH_OUTPUT_PATH}/discriminator_{pgan.n_depth}.png', show_shapes=True)
         tf.keras.utils.plot_model(pgan.regressor, to_file=f'{ARCH_OUTPUT_PATH}/regressor_{pgan.n_depth}.png', show_shapes=True)
-        
-CKPT_OUTPUT_PATH, IMG_OUTPUT_PATH, ARCH_OUTPUT_PATH, LOSS_OUTPUT_PATH, DATASET_OUTPUT_PATH = create_folders()
-
 
 # Saves generated images and updates alpha in WeightedSum layers
 class GANMonitor(tf.keras.callbacks.Callback):
     
-    def __init__(self, num_img, latent_dim, redshift, prefix='', checkpoint_path = ''):
+    def __init__(self, num_img, latent_dim, redshift, prefix='', checkpoint_dir = '', image_path = ''):
         self.num_img = num_img
         self.latent_dim = latent_dim
         self.redshift = redshift
@@ -44,7 +41,8 @@ class GANMonitor(tf.keras.callbacks.Callback):
         self.steps = self.steps_per_epoch * self.epochs
         self.n_epoch = 0
         self.prefix = prefix
-        self.checkpoint_path = checkpoint_path
+        self.checkpoint_dir = checkpoint_dir
+        self.image_path = image_path
         self.absolute_epoch = 0
         self.fid_scores = []
         
@@ -59,7 +57,7 @@ class GANMonitor(tf.keras.callbacks.Callback):
 
     def on_epoch_begin(self, epoch, logs=None):
         self.n_epoch = epoch
-        checkpoint_path = f"{CKPT_OUTPUT_PATH}/pgan_{self.prefix}/pgan_{self.n_epoch:05d}.weights.h5"
+        checkpoint_path = f"{self.checkpoint_dir}/pgan_{self.prefix}/pgan_{self.n_epoch:05d}.weights.h5"
         self.checkpoint_path = checkpoint_path
 
     def on_epoch_end(self, epoch, logs=None):
@@ -93,7 +91,7 @@ class GANMonitor(tf.keras.callbacks.Callback):
                 plt.axis('off')
             
             plt.tight_layout()
-            plt.savefig(f'{IMG_OUTPUT_PATH}/plot_{self.prefix}_{epoch:05d}.png')
+            plt.savefig(f'{self.image_path}/plot_{self.prefix}_{epoch:05d}.png')
             plt.close()
 
         ''' 
@@ -112,9 +110,9 @@ class GANMonitor(tf.keras.callbacks.Callback):
             wandb.log(log_dict) # was commit=False and was working, but only logged last value, working without it as well
             
         '''
-        if (prefix_number == 6):
+        if (prefix_number == 4):
             ## Calculate the FID score after every epoch end between 15-images-sets
-            meta_data = load_meta_data(self.redshift, print_opt=False)
+            meta_data = load_meta_data(self.redshift)
             real_images = prepare_real_images(meta_data=meta_data)
             synthetic_images = prepare_fake_images(generated_imgs)
             self.fid_scores.append(calculate_fid(real_images, synthetic_images))
@@ -122,7 +120,7 @@ class GANMonitor(tf.keras.callbacks.Callback):
                 print('Saving weights...')
                 self.model.save_weights(self.checkpoint_path)
                 print('Successfuly saved weights.')
-        
+        '''
         if (prefix_number == 5) and (prefix_state=='stabilize') and ((epoch%5==0) or (epoch==self.epochs-1)):
             print('Saving weights...')
             self.model.save_weights(self.checkpoint_path)
@@ -132,7 +130,7 @@ class GANMonitor(tf.keras.callbacks.Callback):
             print('Saving weights...')
             self.model.save_weights(self.checkpoint_path)
             print('Successfuly saved weights.')
-        '''
+        
         if (prefix_number == 6) and (prefix_state=='stabilize') and (epoch==self.epochs-1):
             print('Saving model...')
             self.model.save(self.checkpoint_path)

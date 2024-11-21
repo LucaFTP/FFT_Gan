@@ -1,7 +1,7 @@
-from data_utils import CustomDataGen, load_meta_data
-from matplotlib import pyplot as plt
-import matplotlib.ticker as ticker
 import numpy as np
+import matplotlib.ticker as ticker
+from matplotlib import pyplot as plt
+from data_utils import CustomDataGen, load_meta_data
 
 def plot_image_grid(data_gen, num_images=9):
     """
@@ -25,8 +25,8 @@ def plot_image_grid(data_gen, num_images=9):
 
     for i in range(num_images):
         ax = axes[i // grid_size, i % grid_size]
-        img = ax.imshow(X[i], cmap='inferno')  # Imposta vmin e vmax comuni
-        ax.set_title(f"Mass: {y[i]:.2f}", fontsize=10, color='white')  # Titolo in bianco
+        img = ax.imshow(X[i], cmap='inferno')
+        ax.set_title(f"Mass: {y[i]:.2f}", fontsize=10, color='white')
         ax.axis('off')
 
         # Aggiungi una colorbar accanto a ciascun subplot
