@@ -370,8 +370,8 @@ def compute_tstr(meta_data, model, d_steps, NOISE_DIM):
 
     x_train, x_val, y_train, y_val = model_selection.train_test_split(generated_imgs, random_mass, test_size=0.3)
 
-    real_dataset = CustomDataGen(meta_data, X_col='id', y_col='mass', rot_col = False, batch_size = 140, target_size=(256,256), 
-                                 freqs = ['fixed'], blur = 0, shuffle=True)
+    real_dataset = CustomDataGen(meta_data, X_col='id', y_col='mass', rot_col = False, 
+                                 batch_size = 140, target_size=(64,64), shuffle=True)
 
     tstr_regressor.compile(tf.keras.optimizers.Adam(learning_rate=0.0005),  loss=tf.keras.losses.MeanSquaredError())
 

@@ -53,11 +53,11 @@ def plot_image_grid(data_gen, num_images=9):
     plt.savefig('example_grid.png', bbox_inches='tight', transparent=True)
     plt.close()
 
-z = 0.39
+z = 0.03
 meta_data = load_meta_data(z)
 
 batch_size = 32
-target_size = (256, 256)
+target_size = (64, 64)
 X_col = 'id'
 y_col = 'mass'
     
