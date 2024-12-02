@@ -95,6 +95,7 @@ def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, END_SIZE, cbk, 
     new_train_dataset = SmoothingCustomDataGen(meta_data, X_col='id', y_col='mass', rot_col = False, batch_size = BATCH_SIZE[n_depth], 
                                   target_size=(END_SIZE, END_SIZE))
     
+    cbk.set_prefix(prefix=f'{n_depth}_final')
     history_final_step = pgan.fit(new_train_dataset, steps_per_epoch = steps_per_epoch, epochs = epochs, callbacks=[cbk], verbose=1) #train alpha = 1 
     np.save(f'{loss_out_path}/history_final_step_{new_train_dataset.mask_par}.npy', history_final_step.history)
 

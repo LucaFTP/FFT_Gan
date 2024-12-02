@@ -8,7 +8,7 @@ from skimage.transform import rotate, resize
 def create_folders(redshift):
     
     version='_z_'+str(redshift)
-    CKPT_OUTPUT_PATH = 'FFT_GAN_ckpts'+version
+    CKPT_OUTPUT_PATH = '/leonardo_scratch/fast/INA24_C3B13/FFT_GAN_ckpts'+version+'_4_final'
     IMG_OUTPUT_PATH = 'FFT_GAN_Images'+version
     ARCH_OUTPUT_PATH = 'FFT_GAN_Arch'+version
     LOSS_OUTPUT_PATH = 'FFT_GAN_Loss'+version
@@ -110,7 +110,7 @@ class CustomDataGen(tf.keras.utils.Sequence):
         self.shuffle = shuffle
         self.rot_col = rot_col
         self.n = len(self.meta_data)
-        self.data_dir = "/leonardo/home/userexternal/lfontana/ALL_ROT_npy_version/1024x1024/"
+        self.data_dir = "/leonardo_scratch/fast/INA24_C3B13/ALL_ROT_npy_version/1024x1024/"
 
     def on_epoch_end(self):
         if self.shuffle:
@@ -123,6 +123,7 @@ class CustomDataGen(tf.keras.utils.Sequence):
         file_name = self.data_dir + file_name
             
         img = np.load(file_name).astype('float32')
+        img = img[256:768, 256:768]
         img = tf.image.resize(np.expand_dims(img, axis=-1), target_size).numpy()
         
         return (img - np.min(img))/(np.max(img) + np.min(img))
@@ -172,7 +173,7 @@ class SmoothingCustomDataGen(tf.keras.utils.Sequence):
         self.shuffle = shuffle
         self.rot_col = rot_col
         self.n = len(self.meta_data)
-        self.data_dir = "/leonardo/home/userexternal/lfontana/ALL_ROT_npy_version/1024x1024/"
+        self.data_dir = "/leonardo_scratch/fast/INA24_C3B13/ALL_ROT_npy_version/1024x1024/"
 
     def on_epoch_end(self):
         if (self.mask_par < (self.target_size[0]//2)):
@@ -187,6 +188,7 @@ class SmoothingCustomDataGen(tf.keras.utils.Sequence):
         file_name = self.data_dir + file_name
             
         img = np.load(file_name).astype('float32')
+        img = img[256:768, 256:768]
         img = (img - np.min(img))/(np.max(img) + np.min(img))
 
         blured_image = process_with_mask(img, target_size, self.mask_par)

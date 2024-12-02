@@ -55,16 +55,19 @@ class GANMonitor(tf.keras.callbacks.Callback):
 
     def on_epoch_begin(self, epoch, logs=None):
         self.n_epoch = epoch
-        checkpoint_path = f"{self.checkpoint_dir}/pgan_{self.prefix}/pgan_{self.n_epoch:05d}.weights.h5"
+        checkpoint_path = f"{self.checkpoint_dir}/pgan_{self.n_epoch:05d}.weights.h5"
         self.checkpoint_path = checkpoint_path
 
     def on_epoch_end(self, epoch, logs=None):
+
+        prefix_number = int(self.prefix.split("_")[0])
+        prefix_state = str(self.prefix.split("_")[1])
 
         # Plot epoch end generated images
         n_grid = int(np.sqrt(self.num_img))
         generated_imgs = self.model.generator([self.random_latent_vectors,self.mass])
         
-        if epoch % 15 == 0:
+        if epoch % 20 == 0:
             plt.figure(figsize=(10, 10))
             for i in range(self.num_img):
                 plt.subplot(n_grid, n_grid, i+1)
@@ -74,17 +77,20 @@ class GANMonitor(tf.keras.callbacks.Callback):
                 plt.axis('off')
             
             plt.tight_layout()
-            plt.savefig(f'{self.image_path}/plot_{self.prefix}_{epoch:05d}.png')
+            plt.savefig(f'{self.image_path}/plot_{self.prefix}_{epoch:03d}.png')
             plt.close()
 
+        '''
         ## Calculate the FID score after every epoch end between 15-images-sets
         meta_data = load_meta_data(self.redshift)
         real_images = prepare_real_images(meta_data=meta_data)
         synthetic_images = prepare_fake_images(generated_imgs)
-        # self.fid_scores.append(calculate_fid(real_images, synthetic_images))
-        if ((epoch%5==0) or (epoch==self.epochs-1)):
+        self.fid_scores.append(calculate_fid(real_images, synthetic_images))
+        '''
+        # Saving weights of the final stages of training
+        if (prefix_number == 4) and (prefix_state == 'final') and ((epoch%15==0) or (epoch==self.epochs-1)):
             print('Saving weights...')
-            # self.model.save_weights(self.checkpoint_path)
+            self.model.save_weights(self.checkpoint_path)
             print('Successfuly saved weights.')
             
     def on_batch_begin(self, batch, logs=None):
