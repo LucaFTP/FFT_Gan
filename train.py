@@ -1,16 +1,15 @@
+import sys
+import math
+import numpy as np
+import tensorflow as tf
+sys.path.append('../')
+
 from model import *
 from data_utils import *
 from gan_utils import *
 from model_utils import *
-import numpy as np
-import sys
-import tensorflow as tf
-from matplotlib import pyplot as plt
-sys.path.append('../')
-import math
 
-
-def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, START_SIZE, END_SIZE,  cbk, pgan, meta_data, loss_out_path):
+def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, END_SIZE, cbk, pgan, meta_data, loss_out_path):
 
     generator_optimizer     = tf.keras.optimizers.Adam(learning_rate=G_LR, beta_1=0.0, beta_2=0.999, epsilon=1e-8)
     discriminator_optimizer = tf.keras.optimizers.Adam(learning_rate=D_LR, beta_1=0.0, beta_2=0.999, epsilon=1e-8)
@@ -21,9 +20,10 @@ def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, START_SIZE, END
     # plot_models(pgan, ARCH_ARCH_OUTPUT_PATH)
 
     # Start training the initial generator and discriminator
+    START_SIZE = 4
     train_dataset = CustomDataGen(meta_data, X_col='id', y_col='mass', rot_col = False, batch_size = BATCH_SIZE[0], 
-                                  target_size=(START_SIZE, START_SIZE), freqs = ['fixed'], blur = 0, shuffle=True)
-    # 4 x 4
+                                  target_size=(START_SIZE, START_SIZE), shuffle=True)
+    #  4 x 4
     print('SIZE: ', START_SIZE)
     history_init  = pgan.fit(train_dataset, steps_per_epoch = STEPS_PER_EPOCH, epochs = EPOCHS, callbacks=[cbk], verbose=1)
     np.save(f'{loss_out_path}/history_init.npy', history_init.history)
@@ -51,10 +51,10 @@ def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, START_SIZE, END
             epochs = int(EPOCHS*(BATCH_SIZE[0]/BATCH_SIZE[n_depth])) 
 
         train_dataset = CustomDataGen(meta_data, X_col='id', y_col='mass', rot_col = False, batch_size = BATCH_SIZE[n_depth], 
-                                      target_size=(4*(2**n_depth), 4*(2**n_depth)),freqs = ['fixed'], blur = 0, shuffle=True)
+                                      target_size=(4*(2**n_depth), 4*(2**n_depth)), shuffle=True)
 
         cbk.set_prefix(prefix=f'{n_depth}_fade_in')
-        cbk.set_steps(steps_per_epoch=steps_per_epoch, epochs=epochs) 
+        cbk.set_steps(steps_per_epoch=steps_per_epoch, epochs=EPOCHS)
 
         # Put fade in generator and discriminator
         print(f'Fading in for {(4*(2**n_depth), 4*(2**n_depth))} image..')
@@ -85,7 +85,18 @@ def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, START_SIZE, END
                      r_optimizer=tf.keras.optimizers.Adam(learning_rate=R_LR, beta_1=0.0, beta_2=0.999, epsilon=1e-8))
 
         # Train stabilized generator and discriminator
-        history_stabilize = pgan.fit(train_dataset, steps_per_epoch = steps_per_epoch, epochs = epochs, callbacks=[cbk], verbose=1) #train alpha = 1 
-        np.save(f'{loss_out_path}/history_stabilize_{n_depth}.npy',history_stabilize.history)
-        
+        history_stabilize = pgan.fit(train_dataset, steps_per_epoch = steps_per_epoch, epochs = EPOCHS, callbacks=[cbk], verbose=1) #train alpha = 1 
+        np.save(f'{loss_out_path}/history_stabilize_{n_depth}.npy', history_stabilize.history)
+
+    # Train with at the target resolution with the different dataset Class
+    # that allows for varion of the mask extension
+    print("Finished progressive increasing resolution training phase.")
+    print("Starting training with progressive increment of details from the Fourier space...")
+    new_train_dataset = SmoothingCustomDataGen(meta_data, X_col='id', y_col='mass', rot_col = False, batch_size = BATCH_SIZE[n_depth], 
+                                  target_size=(END_SIZE, END_SIZE))
+    
+    cbk.set_prefix(prefix=f'{n_depth}_final')
+    history_final_step = pgan.fit(new_train_dataset, steps_per_epoch = steps_per_epoch, epochs = 2*EPOCHS, callbacks=[cbk], verbose=1) #train alpha = 1 
+    np.save(f'{loss_out_path}/history_final_step_{new_train_dataset.mask_par}.npy', history_final_step.history)
+
     return pgan

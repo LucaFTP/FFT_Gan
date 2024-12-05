@@ -14,8 +14,6 @@ tf.test.gpu_device_name()
 # os.environ["WANDB_MODE"]="offline"
 
 # Parameters
-# REDSHIFT = 0.39
-BATCH_SIZE = [16, 16, 16, 16, 16, 16, 16]
 FILTERS = [512, 256, 128, 64, 32, 16, 8]
 REGRESSOR_FILTERS = [50, 50, 50, 50, 20, 10, 10]
 REGRESSOR_FILTERS_2 = [50, 50, 50, 20, 10, 10, 10]
@@ -144,7 +142,7 @@ class PGAN(Model):
         x1 = tf.keras.layers.AveragePooling2D(pool_size=(2,2), strides=(2, 2))(img_input) 
         x1 = self.regressor.layers[1](x1) # Conv2D 
         x1 = self.regressor.layers[2](x1) # BatchNormalization 
-        x1 = self.regressor.layers[3](x1) # LeakyReLU 
+        x1 = self.regressor.layers[3](x1) # LeakyReLU
 
         # 3.  Define a "fade in" block (x2) with a new "fromGrayScale" and two 3x3 convolutions.
         
@@ -192,7 +190,8 @@ class PGAN(Model):
 
         # Gain should be 1 as its the last layer 
         x = WeightScalingConv(x, filters=1, kernel_size=(1,1), gain=1., activate='tanh', use_pixelnorm=False) # change to tanh and understand gain 1 if training unstable
-
+        x = (x + 1)/2 # Limits the values between 0 and 1
+        
         g_model = Model([noise,mass], x, name='generator')
 
         return g_model
@@ -219,6 +218,7 @@ class PGAN(Model):
         
         # "toGrayScale"
         x2 = WeightScalingConv(x2, filters=1, kernel_size=(1,1), gain=1., activate='tanh', use_pixelnorm=False) # 
+        x2 = (x2 + 1)/2 # Limits the values between 0 and 1
 
         # Define stabilized(c. state) generator
         self.generator_stabilize = Model(self.generator.input, x2, name='generator')
@@ -341,11 +341,12 @@ class PGAN(Model):
         return {'d_loss': d_loss, 'g_loss': g_loss, 'r_loss': r_loss}
 
 
-def compute_tstr(meta_data, model, d_steps, NOISE_DIM):
+def compute_tstr(meta_data, model, d_steps, NOISE_DIM, END_SIZE):
     
     xgan = PGAN(latent_dim = NOISE_DIM, d_steps =  d_steps)
+    depth = int(np.log2(END_SIZE/4)) + 1
 
-    for n_depth in range(1,5):
+    for n_depth in range(1,depth):
         xgan.n_depth = n_depth
         xgan.fade_in_generator()
         xgan.fade_in_discriminator()
@@ -370,8 +371,8 @@ def compute_tstr(meta_data, model, d_steps, NOISE_DIM):
 
     x_train, x_val, y_train, y_val = model_selection.train_test_split(generated_imgs, random_mass, test_size=0.3)
 
-    real_dataset = CustomDataGen(meta_data, X_col='id', y_col='mass', rot_col = False, batch_size = 140, target_size=(256,256), 
-                                 freqs = ['fixed'], blur = 0, shuffle=True)
+    real_dataset = CustomDataGen(meta_data, X_col='id', y_col='mass', rot_col = False, 
+                                 batch_size = 140, target_size=(END_SIZE,END_SIZE), shuffle=True)
 
     tstr_regressor.compile(tf.keras.optimizers.Adam(learning_rate=0.0005),  loss=tf.keras.losses.MeanSquaredError())
 
