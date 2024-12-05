@@ -80,18 +80,18 @@ class GANMonitor(tf.keras.callbacks.Callback):
             plt.savefig(f'{self.image_path}/plot_{self.prefix}_{epoch:03d}.png')
             plt.close()
 
-        '''
-        ## Calculate the FID score after every epoch end between 15-images-sets
-        meta_data = load_meta_data(self.redshift)
-        real_images = prepare_real_images(meta_data=meta_data)
-        synthetic_images = prepare_fake_images(generated_imgs)
-        self.fid_scores.append(calculate_fid(real_images, synthetic_images))
-        '''
         # Saving weights of the final stages of training
-        if (prefix_number == 4) and (prefix_state == 'final') and ((epoch%15==0) or (epoch==self.epochs-1)):
-            print('Saving weights...')
-            self.model.save_weights(self.checkpoint_path)
-            print('Successfuly saved weights.')
+        if (prefix_number == 4) and (prefix_state == 'final'):
+            ## Calculate the FID score after every epoch end between 15-images-sets
+            meta_data = load_meta_data(self.redshift)
+            real_images = prepare_real_images(meta_data=meta_data)
+            synthetic_images = prepare_fake_images(generated_imgs, num_samples=len(real_images))
+            self.fid_scores.append(calculate_fid(real_images, synthetic_images))
+            ## Save Weights
+            if ((epoch%15==0) or (epoch==self.epochs-1)):
+                print('Saving weights...')
+                self.model.save_weights(self.checkpoint_path)
+                print('Successfuly saved weights.')
             
     def on_batch_begin(self, batch, logs=None):
         

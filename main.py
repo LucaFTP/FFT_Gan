@@ -3,7 +3,6 @@ from matplotlib import pyplot
 
 from model import *
 from train import *
-from main_utils import *
 from gan_utils import *
 from data_utils import *
 from gan_utils import *
@@ -36,8 +35,14 @@ parser.add_argument("--batch_size", nargs="+", type=int, default=[32, 32, 16, 16
 # Arguments parsing
 args = parser.parse_args()
 
+def is_power_of_two(n):
+    """Check if an input value n is a multiple of 2."""
+    return n > 0 and (n & (n - 1)) == 0
+
 # Validate the END_SIZE input value
-validate_end_size(args.end_size)
+if not is_power_of_two(args.end_size) or args.end_size > 512:
+    print("Error: END_SIZE must be a power of two and less than 512")
+    sys.exit(1)
 
 # Print of parser parameters
 print(f"REDSHIFT: {args.redshift}")

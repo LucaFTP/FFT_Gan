@@ -126,7 +126,7 @@ class CustomDataGen(tf.keras.utils.Sequence):
         img = img[256:768, 256:768]
         img = tf.image.resize(np.expand_dims(img, axis=-1), target_size).numpy()
         
-        return (img - np.min(img))/(np.max(img) + np.min(img))
+        return (img - np.min(img))/(np.max(img) + np.min(img))#(img - np.mean(img))/(img + np.mean(img))
     
     def __get_output(self, label):
         return label
@@ -189,7 +189,7 @@ class SmoothingCustomDataGen(tf.keras.utils.Sequence):
             
         img = np.load(file_name).astype('float32')
         img = img[256:768, 256:768]
-        img = (img - np.min(img))/(np.max(img) + np.min(img))
+        img = (img - np.min(img))/(np.max(img) + np.min(img))#(img - np.mean(img))/(img + np.mean(img))
 
         blured_image = process_with_mask(img, target_size, self.mask_par)
         

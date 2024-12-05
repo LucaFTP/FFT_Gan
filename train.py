@@ -54,7 +54,7 @@ def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, END_SIZE, cbk, 
                                       target_size=(4*(2**n_depth), 4*(2**n_depth)), shuffle=True)
 
         cbk.set_prefix(prefix=f'{n_depth}_fade_in')
-        cbk.set_steps(steps_per_epoch=steps_per_epoch, epochs=epochs)
+        cbk.set_steps(steps_per_epoch=steps_per_epoch, epochs=EPOCHS)
 
         # Put fade in generator and discriminator
         print(f'Fading in for {(4*(2**n_depth), 4*(2**n_depth))} image..')
@@ -85,7 +85,7 @@ def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, END_SIZE, cbk, 
                      r_optimizer=tf.keras.optimizers.Adam(learning_rate=R_LR, beta_1=0.0, beta_2=0.999, epsilon=1e-8))
 
         # Train stabilized generator and discriminator
-        history_stabilize = pgan.fit(train_dataset, steps_per_epoch = steps_per_epoch, epochs = epochs, callbacks=[cbk], verbose=1) #train alpha = 1 
+        history_stabilize = pgan.fit(train_dataset, steps_per_epoch = steps_per_epoch, epochs = EPOCHS, callbacks=[cbk], verbose=1) #train alpha = 1 
         np.save(f'{loss_out_path}/history_stabilize_{n_depth}.npy', history_stabilize.history)
 
     # Train with at the target resolution with the different dataset Class
@@ -96,7 +96,7 @@ def train(G_LR, D_LR, R_LR, EPOCHS, BATCH_SIZE, STEPS_PER_EPOCH, END_SIZE, cbk, 
                                   target_size=(END_SIZE, END_SIZE))
     
     cbk.set_prefix(prefix=f'{n_depth}_final')
-    history_final_step = pgan.fit(new_train_dataset, steps_per_epoch = steps_per_epoch, epochs = epochs, callbacks=[cbk], verbose=1) #train alpha = 1 
+    history_final_step = pgan.fit(new_train_dataset, steps_per_epoch = steps_per_epoch, epochs = 2*EPOCHS, callbacks=[cbk], verbose=1) #train alpha = 1 
     np.save(f'{loss_out_path}/history_final_step_{new_train_dataset.mask_par}.npy', history_final_step.history)
 
     return pgan

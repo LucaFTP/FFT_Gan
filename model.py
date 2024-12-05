@@ -14,8 +14,6 @@ tf.test.gpu_device_name()
 # os.environ["WANDB_MODE"]="offline"
 
 # Parameters
-# REDSHIFT = 0.39
-BATCH_SIZE = [16, 16, 16, 16, 16, 16, 16]
 FILTERS = [512, 256, 128, 64, 32, 16, 8]
 REGRESSOR_FILTERS = [50, 50, 50, 50, 20, 10, 10]
 REGRESSOR_FILTERS_2 = [50, 50, 50, 20, 10, 10, 10]
@@ -144,7 +142,7 @@ class PGAN(Model):
         x1 = tf.keras.layers.AveragePooling2D(pool_size=(2,2), strides=(2, 2))(img_input) 
         x1 = self.regressor.layers[1](x1) # Conv2D 
         x1 = self.regressor.layers[2](x1) # BatchNormalization 
-        x1 = self.regressor.layers[3](x1) # LeakyReLU 
+        x1 = self.regressor.layers[3](x1) # LeakyReLU
 
         # 3.  Define a "fade in" block (x2) with a new "fromGrayScale" and two 3x3 convolutions.
         
